@@ -1,0 +1,10 @@
+# Dependencies aplikasi (versi diisi saat implementasi)
+Flask
+Flask-SQLAlchemy
+SQLAlchemy
+python-dotenv
+opencv-python
+numpy
+scikit-learn
+joblib
+Pillow

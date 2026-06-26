@@ -1,0 +1,8 @@
+.openclaude/
+.kiro/
+WEB/.env
+WEB/database/*.db
+WEB/static/uploads/
+WEB/static/results/
+__pycache__/
+*.pyc

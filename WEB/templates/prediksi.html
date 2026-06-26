@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h1 class="h4 mb-3">Prediksi Kesegaran Ikan</h1>
+                <p>Upload gambar atau ambil foto, lalu crop area mata ikan sebelum prediksi.</p>
+
+                {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data" class="mb-4">
+                    <div class="mb-3">
+                        <label class="form-label">Gambar Mata Ikan</label>
+                        <input id="inputGambar" class="form-control" type="file" name="gambar" accept="image/*" required>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Prediksi</button>
+                </form>
+
+                <div class="border rounded p-3 mb-4">
+                    <h2 class="h6">Kamera</h2>
+                    <video id="kamera" class="w-100 rounded bg-dark mb-2" autoplay playsinline></video>
+                    <canvas id="canvasKamera" class="d-none"></canvas>
+                    <button id="mulaiKamera" class="btn btn-outline-primary btn-sm" type="button">Buka Kamera</button>
+                    <button id="ambilFoto" class="btn btn-outline-success btn-sm" type="button">Ambil Foto</button>
+                </div>
+
+                <div class="border rounded p-3 mb-4">
+                    <h2 class="h6">Manual Crop Area Mata</h2>
+                    <p class="small text-muted">Drag pada gambar untuk memilih area mata, lalu klik Gunakan Hasil Crop.</p>
+                    <canvas id="canvasCrop" class="w-100 border rounded bg-white"></canvas>
+                    <div class="mt-2">
+                        <button id="gunakanCrop" class="btn btn-outline-success btn-sm" type="button">Gunakan Hasil Crop</button>
+                        <button id="resetCrop" class="btn btn-outline-secondary btn-sm" type="button">Reset Crop</button>
+                    </div>
+                </div>
+
+                {% if hasil %}
+                    <div class="alert {% if hasil == 'Segar' %}alert-success{% else %}alert-warning{% endif %} text-center">
+                        <h2 class="mb-0">Hasil: {{ hasil }}</h2>
+                    </div>
+                    {% if gambar_url %}
+                        <img src="{{ gambar_url }}" class="img-fluid rounded border mb-3" alt="Gambar prediksi">
+                    {% endif %}
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h3 class="h6">Fitur yang Diproses</h3>
+                            <div class="row small">
+                                <div class="col-md-4">R: {{ '%.2f'|format(fitur.mean_r) }}</div>
+                                <div class="col-md-4">G: {{ '%.2f'|format(fitur.mean_g) }}</div>
+                                <div class="col-md-4">B: {{ '%.2f'|format(fitur.mean_b) }}</div>
+                                <div class="col-md-4">H: {{ '%.2f'|format(fitur.mean_h) }}</div>
+                                <div class="col-md-4">S: {{ '%.2f'|format(fitur.mean_s) }}</div>
+                                <div class="col-md-4">V: {{ '%.2f'|format(fitur.mean_v) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const video = document.getElementById('kamera');
+const canvasKamera = document.getElementById('canvasKamera');
+const canvasCrop = document.getElementById('canvasCrop');
+const ctxCrop = canvasCrop.getContext('2d');
+const inputGambar = document.getElementById('inputGambar');
+let gambarAsli = new Image();
+let mulaiX = 0;
+let mulaiY = 0;
+let crop = null;
+let sedangDrag = false;
+
+function fileKeCanvas(file) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        gambarAsli = new Image();
+        gambarAsli.onload = () => gambarKeCanvas();
+        gambarAsli.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function gambarKeCanvas() {
+    const maksimalLebar = 700;
+    const skala = Math.min(1, maksimalLebar / gambarAsli.width);
+    canvasCrop.width = gambarAsli.width * skala;
+    canvasCrop.height = gambarAsli.height * skala;
+    ctxCrop.drawImage(gambarAsli, 0, 0, canvasCrop.width, canvasCrop.height);
+    crop = null;
+}
+
+function gambarCropDenganKotak() {
+    ctxCrop.drawImage(gambarAsli, 0, 0, canvasCrop.width, canvasCrop.height);
+    if (!crop) return;
+    ctxCrop.strokeStyle = '#dc3545';
+    ctxCrop.lineWidth = 3;
+    ctxCrop.strokeRect(crop.x, crop.y, crop.w, crop.h);
+}
+
+function posisiMouse(event) {
+    const rect = canvasCrop.getBoundingClientRect();
+    return {
+        x: (event.clientX - rect.left) * (canvasCrop.width / rect.width),
+        y: (event.clientY - rect.top) * (canvasCrop.height / rect.height),
+    };
+}
+
+inputGambar.addEventListener('change', () => {
+    if (inputGambar.files.length > 0) fileKeCanvas(inputGambar.files[0]);
+});
+
+canvasCrop.addEventListener('mousedown', (event) => {
+    const posisi = posisiMouse(event);
+    mulaiX = posisi.x;
+    mulaiY = posisi.y;
+    sedangDrag = true;
+});
+
+canvasCrop.addEventListener('mousemove', (event) => {
+    if (!sedangDrag) return;
+    const posisi = posisiMouse(event);
+    crop = {
+        x: Math.min(mulaiX, posisi.x),
+        y: Math.min(mulaiY, posisi.y),
+        w: Math.abs(posisi.x - mulaiX),
+        h: Math.abs(posisi.y - mulaiY),
+    };
+    gambarCropDenganKotak();
+});
+
+canvasCrop.addEventListener('mouseup', () => {
+    sedangDrag = false;
+});
+
+document.getElementById('gunakanCrop').addEventListener('click', () => {
+    if (!crop || crop.w < 10 || crop.h < 10) return;
+
+    const skalaX = gambarAsli.width / canvasCrop.width;
+    const skalaY = gambarAsli.height / canvasCrop.height;
+    const canvasHasil = document.createElement('canvas');
+    canvasHasil.width = crop.w * skalaX;
+    canvasHasil.height = crop.h * skalaY;
+    canvasHasil.getContext('2d').drawImage(
+        gambarAsli,
+        crop.x * skalaX,
+        crop.y * skalaY,
+        crop.w * skalaX,
+        crop.h * skalaY,
+        0,
+        0,
+        canvasHasil.width,
+        canvasHasil.height
+    );
+
+    canvasHasil.toBlob((blob) => {
+        const file = new File([blob], 'crop_mata_ikan.jpg', { type: 'image/jpeg' });
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        inputGambar.files = dataTransfer.files;
+        fileKeCanvas(file);
+    }, 'image/jpeg');
+});
+
+document.getElementById('resetCrop').addEventListener('click', () => gambarKeCanvas());
+
+document.getElementById('mulaiKamera').addEventListener('click', async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+});
+
+document.getElementById('ambilFoto').addEventListener('click', () => {
+    canvasKamera.width = video.videoWidth;
+    canvasKamera.height = video.videoHeight;
+    canvasKamera.getContext('2d').drawImage(video, 0, 0);
+    canvasKamera.toBlob((blob) => {
+        const file = new File([blob], 'foto_kamera.jpg', { type: 'image/jpeg' });
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        inputGambar.files = dataTransfer.files;
+        fileKeCanvas(file);
+    }, 'image/jpeg');
+});
+</script>
+{% endblock %}

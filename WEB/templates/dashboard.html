@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h1 class="h4">Dashboard Penelitian</h1>
+                <p class="mb-0">Ringkasan dataset dan hasil pelatihan model K-Nearest Neighbor untuk klasifikasi kesegaran ikan kembung.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3"><div class="card text-center shadow-sm"><div class="card-body"><h2>{{ metrics.total_dataset }}</h2><p>Total Dataset</p></div></div></div>
+    <div class="col-md-3"><div class="card text-center shadow-sm"><div class="card-body"><h2>{{ metrics.jumlah_segar }}</h2><p>Segar</p></div></div></div>
+    <div class="col-md-3"><div class="card text-center shadow-sm"><div class="card-body"><h2>{{ metrics.jumlah_tidak_segar }}</h2><p>Tidak Segar</p></div></div></div>
+    <div class="col-md-3"><div class="card text-center shadow-sm"><div class="card-body"><h2>{{ '%.2f'|format(metrics.akurasi * 100) }}%</h2><p>Akurasi</p></div></div></div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">Data Latih dan Uji</h2>
+                <ul class="mb-0">
+                    <li>Training: {{ metrics.total_train }} data</li>
+                    <li>Testing: {{ metrics.total_test }} data</li>
+                    <li>Nilai K: {{ metrics.k }}</li>
+                    <li>Fitur: Mean RGB dan Mean HSV</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">Confusion Matrix</h2>
+                <table class="table table-bordered text-center mb-0">
+                    <tr><th></th><th>Prediksi Segar</th><th>Prediksi Tidak Segar</th></tr>
+                    <tr><th>Aktual Segar</th><td>{{ metrics.confusion_matrix[0][0] }}</td><td>{{ metrics.confusion_matrix[0][1] }}</td></tr>
+                    <tr><th>Aktual Tidak Segar</th><td>{{ metrics.confusion_matrix[1][0] }}</td><td>{{ metrics.confusion_matrix[1][1] }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
