@@ -1,65 +1,93 @@
 {% extends 'base.html' %}
+{% block title %}Prediksi - Klasifikasi Kesegaran Ikan{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h1 class="h4 mb-3">Prediksi Kesegaran Ikan</h1>
-                <p>Upload gambar atau ambil foto, lalu crop area mata ikan sebelum prediksi.</p>
+<div class="row g-4 align-items-start">
+    <div class="col-xl-5">
+        <div class="hero-card p-4 p-lg-5 mb-4">
+            <span class="section-eyebrow mb-3"><i class="bi bi-camera"></i> Prediksi Cepat</span>
+            <h1 class="display-6 fw-bold mb-3">Upload atau ambil foto mata ikan</h1>
+            <p class="text-secondary mb-0">Pilih gambar yang jelas, crop area mata ikan, lalu sistem akan membaca rata-rata warna RGB-HSV untuk klasifikasi KNN.</p>
+        </div>
 
-                {% if error %}
-                    <div class="alert alert-danger">{{ error }}</div>
-                {% endif %}
+        {% if hasil %}
+        <div class="app-card p-4 mb-4">
+            <div class="text-center">
+                <div class="metric-icon mx-auto mb-3" style="width:4.5rem;height:4.5rem;border-radius:1.5rem;">
+                    {% if hasil == 'Segar' %}<i class="bi bi-check2-circle fs-2"></i>{% else %}<i class="bi bi-exclamation-triangle fs-2"></i>{% endif %}
+                </div>
+                <p class="section-eyebrow mb-3">Hasil Prediksi</p>
+                <h2 class="display-6 fw-bold {% if hasil == 'Segar' %}text-success{% else %}text-warning{% endif %}">{{ hasil }}</h2>
+            </div>
 
-                <form method="post" enctype="multipart/form-data" class="mb-4">
-                    <div class="mb-3">
-                        <label class="form-label">Gambar Mata Ikan</label>
-                        <input id="inputGambar" class="form-control" type="file" name="gambar" accept="image/*" required>
+            {% if gambar_url %}
+                <img src="{{ gambar_url }}" class="img-fluid rounded-4 border my-3" alt="Gambar prediksi">
+            {% endif %}
+
+            <div class="soft-panel p-3 mt-3">
+                <h3 class="h6 fw-bold mb-3"><i class="bi bi-palette me-2"></i>Fitur Warna yang Diproses</h3>
+                <div class="row g-2 small">
+                    <div class="col-6"><div class="feature-pill">R: {{ '%.2f'|format(fitur.mean_r) }}</div></div>
+                    <div class="col-6"><div class="feature-pill">G: {{ '%.2f'|format(fitur.mean_g) }}</div></div>
+                    <div class="col-6"><div class="feature-pill">B: {{ '%.2f'|format(fitur.mean_b) }}</div></div>
+                    <div class="col-6"><div class="feature-pill">H: {{ '%.2f'|format(fitur.mean_h) }}</div></div>
+                    <div class="col-6"><div class="feature-pill">S: {{ '%.2f'|format(fitur.mean_s) }}</div></div>
+                    <div class="col-6"><div class="feature-pill">V: {{ '%.2f'|format(fitur.mean_v) }}</div></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-xl-7">
+        <div class="app-card p-4 p-lg-5">
+            {% if error %}
+                <div class="alert alert-danger rounded-4 border-0"><i class="bi bi-exclamation-circle me-2"></i>{{ error }}</div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" class="mb-4">
+                <div class="soft-panel p-4 mb-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="metric-icon"><i class="bi bi-cloud-arrow-up"></i></span>
+                        <div>
+                            <h2 class="h5 fw-bold mb-0">Pilih Gambar</h2>
+                            <p class="text-secondary mb-0 small">Format gambar umum seperti JPG atau PNG.</p>
+                        </div>
                     </div>
-                    <button class="btn btn-primary" type="submit">Prediksi</button>
-                </form>
-
-                <div class="border rounded p-3 mb-4">
-                    <h2 class="h6">Kamera</h2>
-                    <video id="kamera" class="w-100 rounded bg-dark mb-2" autoplay playsinline></video>
-                    <canvas id="canvasKamera" class="d-none"></canvas>
-                    <button id="mulaiKamera" class="btn btn-outline-primary btn-sm" type="button">Buka Kamera</button>
-                    <button id="ambilFoto" class="btn btn-outline-success btn-sm" type="button">Ambil Foto</button>
+                    <input id="inputGambar" class="form-control form-control-lg rounded-pill" type="file" name="gambar" accept="image/*" required>
                 </div>
 
-                <div class="border rounded p-3 mb-4">
-                    <h2 class="h6">Manual Crop Area Mata</h2>
-                    <p class="small text-muted">Drag pada gambar untuk memilih area mata, lalu klik Gunakan Hasil Crop.</p>
-                    <canvas id="canvasCrop" class="w-100 border rounded bg-white"></canvas>
-                    <div class="mt-2">
-                        <button id="gunakanCrop" class="btn btn-outline-success btn-sm" type="button">Gunakan Hasil Crop</button>
-                        <button id="resetCrop" class="btn btn-outline-secondary btn-sm" type="button">Reset Crop</button>
-                    </div>
-                </div>
-
-                {% if hasil %}
-                    <div class="alert {% if hasil == 'Segar' %}alert-success{% else %}alert-warning{% endif %} text-center">
-                        <h2 class="mb-0">Hasil: {{ hasil }}</h2>
-                    </div>
-                    {% if gambar_url %}
-                        <img src="{{ gambar_url }}" class="img-fluid rounded border mb-3" alt="Gambar prediksi">
-                    {% endif %}
-                    <div class="card bg-light">
-                        <div class="card-body">
-                            <h3 class="h6">Fitur yang Diproses</h3>
-                            <div class="row small">
-                                <div class="col-md-4">R: {{ '%.2f'|format(fitur.mean_r) }}</div>
-                                <div class="col-md-4">G: {{ '%.2f'|format(fitur.mean_g) }}</div>
-                                <div class="col-md-4">B: {{ '%.2f'|format(fitur.mean_b) }}</div>
-                                <div class="col-md-4">H: {{ '%.2f'|format(fitur.mean_h) }}</div>
-                                <div class="col-md-4">S: {{ '%.2f'|format(fitur.mean_s) }}</div>
-                                <div class="col-md-4">V: {{ '%.2f'|format(fitur.mean_v) }}</div>
+                <div class="row g-4 mb-4">
+                    <div class="col-lg-6">
+                        <div class="soft-panel p-4 h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h2 class="h5 fw-bold mb-0"><i class="bi bi-webcam me-2"></i>Kamera</h2>
+                            </div>
+                            <video id="kamera" class="video-frame mb-3" autoplay playsinline></video>
+                            <canvas id="canvasKamera" class="d-none"></canvas>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button id="mulaiKamera" class="btn btn-outline-primary rounded-pill" type="button"><i class="bi bi-camera-video me-1"></i>Buka Kamera</button>
+                                <button id="ambilFoto" class="btn btn-outline-success rounded-pill" type="button"><i class="bi bi-camera me-1"></i>Ambil Foto</button>
                             </div>
                         </div>
                     </div>
-                {% endif %}
-            </div>
+                    <div class="col-lg-6">
+                        <div class="soft-panel p-4 h-100">
+                            <h2 class="h5 fw-bold mb-2"><i class="bi bi-crop me-2"></i>Crop Area Mata</h2>
+                            <p class="small text-secondary mb-3">Drag pada gambar untuk memilih area mata, lalu gunakan hasil crop sebelum prediksi.</p>
+                            <canvas id="canvasCrop" class="canvas-frame mb-3"></canvas>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button id="gunakanCrop" class="btn btn-outline-success rounded-pill" type="button"><i class="bi bi-check2 me-1"></i>Gunakan Crop</button>
+                                <button id="resetCrop" class="btn btn-outline-secondary rounded-pill" type="button"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-brand btn-lg w-100 rounded-pill py-3 fw-bold" type="submit">
+                    <i class="bi bi-stars me-2"></i>Prediksi Kesegaran Ikan
+                </button>
+            </form>
         </div>
     </div>
 </div>
@@ -98,9 +126,11 @@ function gambarKeCanvas() {
 function gambarCropDenganKotak() {
     ctxCrop.drawImage(gambarAsli, 0, 0, canvasCrop.width, canvasCrop.height);
     if (!crop) return;
-    ctxCrop.strokeStyle = '#dc3545';
+    ctxCrop.strokeStyle = '#0f766e';
     ctxCrop.lineWidth = 3;
+    ctxCrop.setLineDash([10, 6]);
     ctxCrop.strokeRect(crop.x, crop.y, crop.w, crop.h);
+    ctxCrop.setLineDash([]);
 }
 
 function posisiMouse(event) {

@@ -1,43 +1,150 @@
 {% extends 'base.html' %}
+{% block title %}Dashboard - Klasifikasi Kesegaran Ikan{% endblock %}
 
 {% block content %}
-<div class="row g-3">
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h1 class="h4">Dashboard Penelitian</h1>
-                <p class="mb-0">Ringkasan dataset dan hasil pelatihan model K-Nearest Neighbor untuk klasifikasi kesegaran ikan kembung.</p>
+<div class="hero-card p-4 p-lg-5 mb-4">
+    <div class="row align-items-center g-4 position-relative">
+        <div class="col-lg-8">
+            <span class="section-eyebrow mb-3"><i class="bi bi-activity"></i> Dashboard Penelitian</span>
+            <h1 class="display-6 fw-bold mb-3">KLASIFIKASI TINGKAT KESEGARAN IKAN KEMBUNG (RASTRELLIGER FAUGHNI) PADA CITRA MATA MENGGUNAKAN METODE K-NEAREST NEIGHBOR</h1>
+            <p class="lead text-secondary mb-4">
+                Ringkasan dataset, pembagian data, dan performa model K-Nearest Neighbor untuk mengklasifikasikan ikan kembung menjadi <strong>Segar</strong> atau <strong>Tidak Segar</strong>.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ url_for('prediksi') }}" class="btn btn-brand btn-lg rounded-pill px-4"><i class="bi bi-upload me-2"></i>Mulai Prediksi</a>
+                <a href="{{ url_for('riwayat') }}" class="btn btn-outline-success btn-lg rounded-pill px-4"><i class="bi bi-clock-history me-2"></i>Lihat Riwayat</a>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="soft-panel p-4 text-center">
+                <div class="metric-icon mx-auto mb-3" style="width:4rem;height:4rem;border-radius:1.35rem;"><i class="bi bi-cpu fs-3"></i></div>
+                <div class="text-secondary small fw-semibold text-uppercase">Metode Model</div>
+                <div class="h2 fw-bold mb-0">KNN</div>
+                <div class="text-secondary">K = {{ metrics.k }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="metric-card h-100 p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-secondary fw-semibold mb-1">Total Dataset</p>
+                    <h2 class="fw-bold mb-0">{{ metrics.total_dataset }}</h2>
+                </div>
+                <span class="metric-icon"><i class="bi bi-images"></i></span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="metric-card h-100 p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-secondary fw-semibold mb-1">Data Segar</p>
+                    <h2 class="fw-bold text-success mb-0">{{ metrics.jumlah_segar }}</h2>
+                </div>
+                <span class="metric-icon"><i class="bi bi-check2-circle"></i></span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="metric-card h-100 p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-secondary fw-semibold mb-1">Tidak Segar</p>
+                    <h2 class="fw-bold text-warning mb-0">{{ metrics.jumlah_tidak_segar }}</h2>
+                </div>
+                <span class="metric-icon"><i class="bi bi-exclamation-triangle"></i></span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="metric-card h-100 p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-secondary fw-semibold mb-1">Akurasi Model</p>
+                    <h2 class="fw-bold text-primary mb-0">{{ '%.2f'|format(metrics.akurasi * 100) }}%</h2>
+                </div>
+                <span class="metric-icon"><i class="bi bi-graph-up-arrow"></i></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="app-card h-100 p-4">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <span class="metric-icon"><i class="bi bi-diagram-3"></i></span>
+                <div>
+                    <h2 class="h4 fw-bold mb-0">Komposisi Data</h2>
+                    <p class="text-secondary mb-0">Data latih, data uji, dan fitur warna.</p>
+                </div>
+            </div>
+            {% set total_split = metrics.total_train + metrics.total_test %}
+            {% set persen_train = (metrics.total_train / total_split * 100) if total_split else 0 %}
+            {% set persen_test = (metrics.total_test / total_split * 100) if total_split else 0 %}
+            <div class="soft-panel p-3 mb-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Training</span>
+                    <strong>{{ metrics.total_train }} data ({{ '%.1f'|format(persen_train) }}%)</strong>
+                </div>
+                <div class="progress" role="progressbar" aria-label="Data training" aria-valuenow="{{ '%.1f'|format(persen_train) }}" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar bg-success" style="width: {{ '%.1f'|format(persen_train) }}%"></div>
+                </div>
+            </div>
+            <div class="soft-panel p-3 mb-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Testing</span>
+                    <strong>{{ metrics.total_test }} data ({{ '%.1f'|format(persen_test) }}%)</strong>
+                </div>
+                <div class="progress" role="progressbar" aria-label="Data testing" aria-valuenow="{{ '%.1f'|format(persen_test) }}" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar bg-info" style="width: {{ '%.1f'|format(persen_test) }}%"></div>
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                <span class="feature-pill">Mean R</span>
+                <span class="feature-pill">Mean G</span>
+                <span class="feature-pill">Mean B</span>
+                <span class="feature-pill">Mean H</span>
+                <span class="feature-pill">Mean S</span>
+                <span class="feature-pill">Mean V</span>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3"><div class="card text-center shadow-sm"><div class="card-body"><h2>{{ metrics.total_dataset }}</h2><p>Total Dataset</p></div></div></div>
-    <div class="col-md-3"><div class="card text-center shadow-sm"><div class="card-body"><h2>{{ metrics.jumlah_segar }}</h2><p>Segar</p></div></div></div>
-    <div class="col-md-3"><div class="card text-center shadow-sm"><div class="card-body"><h2>{{ metrics.jumlah_tidak_segar }}</h2><p>Tidak Segar</p></div></div></div>
-    <div class="col-md-3"><div class="card text-center shadow-sm"><div class="card-body"><h2>{{ '%.2f'|format(metrics.akurasi * 100) }}%</h2><p>Akurasi</p></div></div></div>
-
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h2 class="h5">Data Latih dan Uji</h2>
-                <ul class="mb-0">
-                    <li>Training: {{ metrics.total_train }} data</li>
-                    <li>Testing: {{ metrics.total_test }} data</li>
-                    <li>Nilai K: {{ metrics.k }}</li>
-                    <li>Fitur: Mean RGB dan Mean HSV</li>
-                </ul>
+    <div class="col-lg-7">
+        <div class="app-card h-100 p-4">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <span class="metric-icon"><i class="bi bi-grid-3x3-gap"></i></span>
+                <div>
+                    <h2 class="h4 fw-bold mb-0">Confusion Matrix</h2>
+                    <p class="text-secondary mb-0">Perbandingan label aktual dan hasil prediksi model.</p>
+                </div>
             </div>
-        </div>
-    </div>
-
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h2 class="h5">Confusion Matrix</h2>
-                <table class="table table-bordered text-center mb-0">
-                    <tr><th></th><th>Prediksi Segar</th><th>Prediksi Tidak Segar</th></tr>
-                    <tr><th>Aktual Segar</th><td>{{ metrics.confusion_matrix[0][0] }}</td><td>{{ metrics.confusion_matrix[0][1] }}</td></tr>
-                    <tr><th>Aktual Tidak Segar</th><td>{{ metrics.confusion_matrix[1][0] }}</td><td>{{ metrics.confusion_matrix[1][1] }}</td></tr>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle text-center mb-0 overflow-hidden rounded-4">
+                    <thead class="table-success">
+                        <tr>
+                            <th>Aktual / Prediksi</th>
+                            <th>Segar</th>
+                            <th>Tidak Segar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th class="table-light">Segar</th>
+                            <td class="fw-bold text-success fs-4">{{ metrics.confusion_matrix[0][0] }}</td>
+                            <td class="fw-bold text-warning fs-4">{{ metrics.confusion_matrix[0][1] }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">Tidak Segar</th>
+                            <td class="fw-bold text-warning fs-4">{{ metrics.confusion_matrix[1][0] }}</td>
+                            <td class="fw-bold text-success fs-4">{{ metrics.confusion_matrix[1][1] }}</td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
         </div>

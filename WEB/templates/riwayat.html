@@ -1,41 +1,84 @@
 {% extends 'base.html' %}
+{% block title %}Riwayat - Klasifikasi Kesegaran Ikan{% endblock %}
 
 {% block content %}
-<div class="card shadow-sm">
-    <div class="card-body">
-        <h1 class="h4 mb-3">Riwayat Prediksi</h1>
-        <div class="table-responsive">
-            <table class="table table-striped align-middle">
-                <thead>
-                    <tr>
-                        <th>Waktu</th>
-                        <th>File</th>
-                        <th>Hasil</th>
-                        <th>RGB</th>
-                        <th>HSV</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in data %}
-                    <tr>
-                        <td>{{ item.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
-                        <td>{{ item.filename }}</td>
-                        <td><span class="badge {% if item.predicted_label == 'Segar' %}text-bg-success{% else %}text-bg-warning{% endif %}">{{ item.predicted_label }}</span></td>
-                        <td>{{ '%.1f'|format(item.mean_r) }}, {{ '%.1f'|format(item.mean_g) }}, {{ '%.1f'|format(item.mean_b) }}</td>
-                        <td>{{ '%.1f'|format(item.mean_h) }}, {{ '%.1f'|format(item.mean_s) }}, {{ '%.1f'|format(item.mean_v) }}</td>
-                        <td>
-                            <form method="post" action="{{ url_for('hapus_riwayat', id_riwayat=item.id) }}" onsubmit="return confirm('Hapus riwayat ini?')">
-                                <button class="btn btn-sm btn-danger" type="submit">Hapus</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="6" class="text-center text-muted">Belum ada riwayat prediksi.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="hero-card p-4 p-lg-5 mb-4">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-4 position-relative">
+        <div>
+            <span class="section-eyebrow mb-3"><i class="bi bi-clock-history"></i> Log Prediksi</span>
+            <h1 class="display-6 fw-bold mb-2">Riwayat Prediksi</h1>
+            <p class="lead text-secondary mb-0">Daftar hasil klasifikasi yang pernah dilakukan beserta nilai fitur warna RGB dan HSV.</p>
         </div>
+        <a href="{{ url_for('prediksi') }}" class="btn btn-brand btn-lg rounded-pill px-4"><i class="bi bi-plus-circle me-2"></i>Prediksi Baru</a>
+    </div>
+</div>
+
+<div class="app-card p-3 p-lg-4">
+    <div class="table-responsive">
+        <table class="table table-modern align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Waktu</th>
+                    <th>File</th>
+                    <th>Hasil</th>
+                    <th>RGB</th>
+                    <th>HSV</th>
+                    <th class="text-end">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data %}
+                <tr>
+                    <td>
+                        <div class="fw-semibold">{{ item.created_at.strftime('%d-%m-%Y') }}</div>
+                        <div class="small text-secondary">{{ item.created_at.strftime('%H:%M') }} WIB</div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="metric-icon" style="width:2.25rem;height:2.25rem;border-radius:.8rem;"><i class="bi bi-image"></i></span>
+                            <span class="text-truncate" style="max-width: 220px;" title="{{ item.filename }}">{{ item.filename }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge rounded-pill px-3 py-2 {% if item.predicted_label == 'Segar' %}text-bg-success{% else %}text-bg-warning{% endif %}">
+                            {% if item.predicted_label == 'Segar' %}<i class="bi bi-check2-circle me-1"></i>{% else %}<i class="bi bi-exclamation-triangle me-1"></i>{% endif %}
+                            {{ item.predicted_label }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-wrap gap-1 small">
+                            <span class="feature-pill">R {{ '%.1f'|format(item.mean_r) }}</span>
+                            <span class="feature-pill">G {{ '%.1f'|format(item.mean_g) }}</span>
+                            <span class="feature-pill">B {{ '%.1f'|format(item.mean_b) }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-wrap gap-1 small">
+                            <span class="feature-pill">H {{ '%.1f'|format(item.mean_h) }}</span>
+                            <span class="feature-pill">S {{ '%.1f'|format(item.mean_s) }}</span>
+                            <span class="feature-pill">V {{ '%.1f'|format(item.mean_v) }}</span>
+                        </div>
+                    </td>
+                    <td class="text-end">
+                        <form method="post" action="{{ url_for('hapus_riwayat', id_riwayat=item.id) }}" onsubmit="return confirm('Hapus riwayat ini?')">
+                            <button class="btn btn-sm btn-outline-danger rounded-pill" type="submit"><i class="bi bi-trash me-1"></i>Hapus</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6">
+                        <div class="text-center py-5">
+                            <div class="metric-icon mx-auto mb-3" style="width:4rem;height:4rem;border-radius:1.35rem;"><i class="bi bi-inbox fs-3"></i></div>
+                            <h2 class="h4 fw-bold">Belum ada riwayat</h2>
+                            <p class="text-secondary mb-4">Silakan lakukan prediksi pertama untuk menyimpan hasil klasifikasi.</p>
+                            <a href="{{ url_for('prediksi') }}" class="btn btn-brand rounded-pill px-4">Mulai Prediksi</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}
