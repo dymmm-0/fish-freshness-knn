@@ -1,10 +1,7 @@
-# Dependencies aplikasi (versi diisi saat implementasi)
 Flask
 Flask-SQLAlchemy
-SQLAlchemy
-python-dotenv
 opencv-python-headless
 numpy
 scikit-learn
-joblib
 Pillow
+gunicorn
